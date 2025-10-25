@@ -20,11 +20,17 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Check if running in Railway environment
+IS_RAILWAY = os.getenv('RAILWAY_ENV') == 'production'
+
 SECRET_KEY = os.getenv('SECRET_KEY', 'your-secret-key-here-change-in-production')
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Parse ALLOWED_HOSTS from environment variable or use default
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+    ALLOWED_HOSTS = ['*'] if IS_RAILWAY else ['localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -40,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,27 +79,41 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Determine if we need SSL (for PlanetScale, some AWS RDS instances)
-USE_SSL = os.getenv('DB_USE_SSL', 'False') == 'True'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+# Database configuration
+# Default to SQLite for development if no database URL is provided
+if DATABASE_URL := os.getenv('DATABASE_URL'):
+    # Parse the DATABASE_URL environment variable
+    db_url = urlparse(DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_url.path[1:],  # Remove leading slash
+            'USER': db_url.username,
+            'PASSWORD': db_url.password,
+            'HOST': db_url.hostname,
+            'PORT': db_url.port or '5432',
         }
     }
-}
-
-# Add SSL if needed
-if USE_SSL:
-    DATABASES['default']['OPTIONS']['ssl'] = {'ssl_mode': 'REQUIRED'}
+elif IS_RAILWAY:
+    # Fallback to individual PG* environment variables on Railway
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('PGDATABASE'),
+            'USER': os.getenv('PGUSER'),
+            'PASSWORD': os.getenv('PGPASSWORD'),
+            'HOST': os.getenv('PGHOST'),
+            'PORT': os.getenv('PGPORT', '5432'),
+        }
+    }
+else:
+    # Local development with SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -129,7 +150,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
