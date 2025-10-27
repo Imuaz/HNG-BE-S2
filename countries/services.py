@@ -69,31 +69,22 @@ class CountryService:
             raise ExternalAPIError(f"Could not fetch data from Exchange Rate API: {str(e)}")
     
     @staticmethod
-    def calculate_estimated_gdp(
-        population: int,
-        exchange_rate: Optional[Decimal]
-    ) -> Optional[Decimal]:
-        """
-        Calculate estimated GDP using the formula:
-        GDP = population × random(1000-2000) ÷ exchange_rate
-        
-        Args:
-            population: Country population
-            exchange_rate: Currency exchange rate (or None)
-            
-        Returns:
-            Estimated GDP as Decimal, or None if calculation not possible
-        """
+    def calculate_estimated_gdp(population: int,
+    exchange_rate: Optional[Decimal]) -> Optional[Decimal]:
+        """Calculate estimated GDP with proper error handling"""
         if not exchange_rate or exchange_rate == 0:
             return None
-        
-        # Generate random multiplier between 1000 and 2000
+        # FIX: Ensure population is valid
+        try:
+            population = int(population)
+            if population <= 0:
+                return None
+        except (TypeError, ValueError):
+            return None
+            
         multiplier = random.uniform(1000, 2000)
-        
-        # Calculate: population × multiplier ÷ exchange_rate
         gdp = Decimal(str(population)) * Decimal(str(multiplier)) / exchange_rate
-        
-        # Round to 2 decimal places
+
         return gdp.quantize(Decimal('0.01'))
     
     @staticmethod
