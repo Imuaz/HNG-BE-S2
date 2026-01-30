@@ -30,7 +30,9 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 # Parse ALLOWED_HOSTS from environment variable or use default
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
-    ALLOWED_HOSTS = ["*"] if IS_RAILWAY else ["localhost", "127.0.0.1"]
+    ALLOWED_HOSTS = (
+        ["*"] if IS_RAILWAY else ["localhost", "127.0.0.1", "imuaz.pythonanywhere.com"]
+    )
 
 # Application definition
 INSTALLED_APPS = [
