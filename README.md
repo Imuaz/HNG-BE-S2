@@ -2,6 +2,17 @@
 
 A RESTful API built with Django REST Framework that fetches country data, currency exchange rates, and provides CRUD operations.
 
+## 📚 Interactive API Documentation
+
+The API includes comprehensive interactive documentation:
+
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs) - Interactive API testing interface
+- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc) - Clean, readable documentation
+- **OpenAPI Schema**: [http://localhost:8000/schema](http://localhost:8000/schema) - OpenAPI 3.0 schema for API clients
+- **API Home**: [http://localhost:8000/](http://localhost:8000/) - Project information and status
+
+For production, replace `localhost:8000` with your PythonAnywhere URL.
+
 ## Features
 
 - Fetch and cache country data from external APIs
@@ -35,6 +46,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 3. Install dependencies:
 ```bash
 pip install -r requirements.txt
+# This includes drf-spectacular for API documentation
 ```
 
 4. Create MySQL database:
